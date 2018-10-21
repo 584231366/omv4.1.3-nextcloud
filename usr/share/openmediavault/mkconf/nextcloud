@@ -1,0 +1,26 @@
+#!/bin/sh
+
+set -e
+
+. /etc/default/openmediavault
+. /usr/share/openmediavault/scripts/helper-functions
+
+OMV_EXAMPLE_XPATH="/config/services/nextcloud"
+OMV_EXAMPLE_CONF="/home/root/nextcloud.conf"
+
+enable="$(omv_config_get "${OMV_EXAMPLE_XPATH}/enable")"
+port="$(omv_config_get "${OMV_EXAMPLE_XPATH}/port")"
+ssl_enable="$(omv_config_get "${OMV_EXAMPLE_XPATH}/ssl_enable")"
+sslcertificateref="$(omv_config_get "${OMV_EXAMPLE_XPATH}/sslcertificateref")"
+sharedfolderref="$(omv_config_get "${OMV_EXAMPLE_XPATH}/sharedfolderref")"
+
+
+cat <<EOF > ${OMV_EXAMPLE_CONF}
+enable=$(omv_config_get "${OMV_EXAMPLE_XPATH}/enable")
+port=$(omv_config_get "${OMV_EXAMPLE_XPATH}/port")
+ssl_enable=$(omv_config_get "${OMV_EXAMPLE_XPATH}/ssl_enable")
+sslcertificateref=$(omv_config_get "${OMV_EXAMPLE_XPATH}/sslcertificateref")
+sharedfolderref=$(omv_config_get "${OMV_EXAMPLE_XPATH}/sharedfolderref")
+EOF
+
+exit 0

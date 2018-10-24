@@ -5,22 +5,97 @@ set -e
 . /etc/default/openmediavault
 . /usr/share/openmediavault/scripts/helper-functions
 
-OMV_EXAMPLE_XPATH="/config/services/nextcloud"
-OMV_EXAMPLE_CONF="/home/root/nextcloud.conf"
+OMV_NEXTCLOUD_XPATH="/config/services/nextcloud"
 
-enable="$(omv_config_get "${OMV_EXAMPLE_XPATH}/enable")"
-port="$(omv_config_get "${OMV_EXAMPLE_XPATH}/port")"
-ssl_enable="$(omv_config_get "${OMV_EXAMPLE_XPATH}/ssl_enable")"
-sslcertificateref="$(omv_config_get "${OMV_EXAMPLE_XPATH}/sslcertificateref")"
-sharedfolderref="$(omv_config_get "${OMV_EXAMPLE_XPATH}/sharedfolderref")"
+# Nginx paths.
+NGINX_AVAILABLE_DIR="/etc/nginx/sites-available"
+NGINX_ENABLED_DIR="/etc/nginx/sites-enabled"
+NGINX_LOG_DIR="/var/log/nginx"
 
+OMV_NGINX_CUSTOM_CONF="/etc/nginx/conf.d/nextcloud.conf"
+OMV_NGINX_CONF="nextcloud-omv-nginx"
 
-cat <<EOF > ${OMV_EXAMPLE_CONF}
-enable=$(omv_config_get "${OMV_EXAMPLE_XPATH}/enable")
-port=$(omv_config_get "${OMV_EXAMPLE_XPATH}/port")
-ssl_enable=$(omv_config_get "${OMV_EXAMPLE_XPATH}/ssl_enable")
-sslcertificateref=$(omv_config_get "${OMV_EXAMPLE_XPATH}/sslcertificateref")
-sharedfolderref=$(omv_config_get "${OMV_EXAMPLE_XPATH}/sharedfolderref")
-EOF
+enable="$(omv_config_get "${OMV_NEXTCLOUD_XPATH}/enable")"
+port="$(omv_config_get "${OMV_NEXTCLOUD_XPATH}/port")"
+ssl_enable="$(omv_config_get "${OMV_NEXTCLOUD_XPATH}/ssl_enable")"
+sslcertificateref="$(omv_config_get "${OMV_NEXTCLOUD_XPATH}/sslcertificateref")"
+sharedfolderref="$(omv_config_get "${OMV_NEXTCLOUD_XPATH}/sharedfolderref")"
+
+config="$NGINX_AVAILABLE_DIR/$OMV_NGINX_CONF"
+
+if [ -e "$NGINX_ENABLED_DIR/$OMV_NGINX_CONF" ]; then
+    rm "$NGINX_ENABLED_DIR/$OMV_NGINX_CONF"
+fi
+
+if [ -e "$NGINX_AVAILABLE_DIR/$OMV_NGINX_CONF" ]; then
+    rm "$NGINX_AVAILABLE_DIR/$OMV_NGINX_CONF"
+fi
+
+if [ $enable -eq 1 ]
+then
+	echo "server {" >> "$config"
+	if [ $ssl_enable -eq 1 ]
+	then
+		{
+			echo "	listen $port ssl;"
+			echo "	listen [::]:$port ssl;"
+			echo "	server_name nextcloud.com;"
+			echo "	ssl_certificate     $OMV_SSL_CERTIFICATE_DIR/certs/$OMV_SSL_CERTIFICATE_PREFIX$sslcertificateref.crt;"
+            echo "	ssl_certificate_key $OMV_SSL_CERTIFICATE_DIR/private/$OMV_SSL_CERTIFICATE_PREFIX$sslcertificateref.key;"
+		} >> "$config"
+	else
+		{
+			echo "	listen $port;"
+			echo "	listen [::]:$port;"
+			echo "	server_name nextcloud.com;"
+		} >> "$config"
+	fi
+	echo "	root $(omv_get_sharedfolder_path $sharedfolderref);" >> "$config"
+	echo "	index index.php index.html;" >> "$config"
+	echo "	set \$socket \"unix:/var/run/php/php7.0-fpm.sock\";" >> "$config"
+	echo "	error_log  /var/log/nginx/nextcloud-error.log;" >> "$config"
+	{
+		echo "	location ~ \.php$ {"
+		echo "		include snippets/fastcgi-php.conf;"
+		echo "		fastcgi_pass \$socket;"
+		echo "	}"
+	} >> "$config"
+	
+	{
+		echo "	location ~ ^(.+?\.php)(/.*)?$ {"
+		echo "		try_files \$1 = 404;"
+		echo "		include fastcgi_params;"
+		echo "		fastcgi_pass \$socket;"
+		echo "		fastcgi_param SCRIPT_FILENAME \$document_root\$1;"
+		echo "		fastcgi_param PATH_INFO \$2;"
+		echo "		fastcgi_param HTTPS on;"
+		echo "	}"
+	} >> "$config"
+	
+	echo "}" >> "$config"
+	
+	chmod 755 "$config"
+	
+	# Enable the configuration file.
+    if [ -e "$NGINX_AVAILABLE_DIR/$OMV_NGINX_CONF" ]; then
+        ln -s "$NGINX_AVAILABLE_DIR/$OMV_NGINX_CONF" "$NGINX_ENABLED_DIR/$OMV_NGINX_CONF"
+    fi
+fi
+
+service nginx restart
+
+if [ "`ls -A $(omv_get_sharedfolder_path $sharedfolderref)`" = "" ]
+then
+	zipFile="nextcloud-14.0.3.zip"
+	zipPath="/var/cache/openmediavault"
+	if [ -e "$zipPath/$zipFile" ]
+	then
+		unzip -o "$zipPath/$zipFile" -d $(omv_get_sharedfolder_path $sharedfolderref)
+		mv $(omv_get_sharedfolder_path $sharedfolderref)/nextcloud/* $(omv_get_sharedfolder_path $sharedfolderref)
+		mv $(omv_get_sharedfolder_path $sharedfolderref)/nextcloud/.htaccess $(omv_get_sharedfolder_path $sharedfolderref)
+		mv $(omv_get_sharedfolder_path $sharedfolderref)/nextcloud/.user.ini $(omv_get_sharedfolder_path $sharedfolderref)
+		chown -R www-data $(omv_get_sharedfolder_path $sharedfolderref)/*
+	fi
+fi
 
 exit 0

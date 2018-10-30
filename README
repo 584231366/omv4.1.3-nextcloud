@@ -1,0 +1,11 @@
+1.配置界面
+2.配置信息保存
+3.nextcloud下载
+4.依赖安装 (未实现)
+	a.  unzip
+	b.	php-curl
+	c.	php-zip
+	d.  php-gd
+	e. 	mysql
+5.启用时配置nginx server
+6.解压nextcloud至server目录

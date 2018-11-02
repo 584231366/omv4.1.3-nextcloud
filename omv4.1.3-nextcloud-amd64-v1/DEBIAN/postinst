@@ -1,0 +1,47 @@
+#!/bin/sh
+
+set -e
+
+. /etc/default/openmediavault
+. /usr/share/openmediavault/scripts/helper-functions
+
+
+case "$1" in
+    configure)
+        SERVICE_XPATH_NAME="nextcloud"
+        SERVICE_XPATH="/config/services/${SERVICE_XPATH_NAME}"
+		# 下载nextcloud包
+		zipFile="nextcloud-14.0.3.zip"
+		zipPath="/var/cache/openmediavault"
+		if [ ! -e "$zipPath/$zipFile" ]
+		then
+			wget -P $zipPath https://download.nextcloud.com/server/releases/nextcloud-14.0.3.zip
+		fi
+		
+        # Add the default configuration
+        if ! omv_config_exists "${SERVICE_XPATH}"; then
+            omv_config_add_element "/config/services" "${SERVICE_XPATH_NAME}"
+            omv_config_add_element "${SERVICE_XPATH}" "enable" "0"
+			omv_config_add_element "${SERVICE_XPATH}" "port" "80"
+			omv_config_add_element "${SERVICE_XPATH}" "ssl_enable" "0"
+			omv_config_add_element "${SERVICE_XPATH}" "sslcertificateref" ""
+			omv_config_add_element "${SERVICE_XPATH}" "sharedfolderref" ""
+        fi
+		# Activate package triggers. These triggers are only set during the
+        # package installation.
+		dpkg-trigger update-fixperms
+        dpkg-trigger update-locale
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+        echo "postinst called with unknown argument" >&2
+        exit 1
+    ;;
+esac
+
+#DEBHELPER#
+
+exit 0

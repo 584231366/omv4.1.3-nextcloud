@@ -1,7 +1,7 @@
 1.配置界面
 2.配置信息保存
 3.nextcloud下载
-4.依赖安装 (未实现)
+4.依赖安装
 	a.  unzip
 	b.	php-curl
 	c.	php-zip
@@ -9,3 +9,10 @@
 	e. 	mysql
 5.启用时配置nginx server
 6.解压nextcloud至server目录
+
+
+v1:只实现了12356的功能 依赖需要自己安装
+v2:在postinst 里加了安装命令，可是未知原因，在命令行下执行可以安装，在deb里进行安装会报错
+	E: 无法获得锁 /var/lib/dpkg/lock - open (11: 资源暂时不可用)
+	E: 无法锁定管理目录(/var/lib/dpkg/)，是否有其他进程正占用它？
+	待解决

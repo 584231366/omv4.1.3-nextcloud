@@ -1,0 +1,31 @@
+[{
+	"type": "rpc",
+	"id": "rpc.nextcloud.setsettings",
+	"params": {
+		"type": "object",
+		"properties": {
+		    "enable": {
+		        "type": "boolean",
+		        "required": true
+		    },
+			"port": {
+		        "type": "integer",
+		        "minimum": 0,
+		        "maximum": 65535,
+		        "required": true
+		    },
+			"ssl_enable": {
+		        "type": "boolean",
+		        "required": false
+		    },
+		    "sslcertificateref": {
+		        "type": "string",
+		        "required": true
+		    },
+		    "sharedfolderref": {
+		        "type": "string",
+		        "required": true
+		    }
+		}
+	}
+}]

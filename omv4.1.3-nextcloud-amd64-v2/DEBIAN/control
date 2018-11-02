@@ -1,0 +1,11 @@
+Package: openmediavault-4.1.3-nextcloud
+Version: 1.0.0-2018.10.21
+Section: BioInfoServ
+Priority: optional
+Depends:
+Suggests:
+Architecture: amd64
+Installed-Size: 4096
+Maintainer: tangjiajia
+Provides: tangjiajia
+Description: nextcloud plugin of omv 4.1.3

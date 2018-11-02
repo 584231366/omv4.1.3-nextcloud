@@ -8,4 +8,4 @@ Architecture: amd64
 Installed-Size: 4096
 Maintainer: tangjiajia
 Provides: tangjiajia
-Description: nextcloud plugin of omv
+Description: nextcloud plugin of omv 4.1.3
